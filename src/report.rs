@@ -5,9 +5,13 @@ use serde::Serialize;
 /// Metric used to rank hotspots.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum SortKey {
+    /// Combined score (see Scoring in --help)
     Score,
+    /// Cognitive complexity: how hard the code is to follow
     Cognitive,
+    /// Cyclomatic complexity: number of independent paths
     Cyclomatic,
+    /// Source lines of code
     Sloc,
 }
 

@@ -8,7 +8,9 @@ use crate::report::{FileHotspot, FunctionHotspot};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum Format {
+    /// Aligned text table for people
     Table,
+    /// Versioned JSON for scripts and agents
     Json,
 }
 

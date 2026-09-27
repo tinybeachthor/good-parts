@@ -151,3 +151,23 @@ fn exit_codes() {
     assert_eq!(exit_code(&["--threshold", "5"], dir.path()), 0);
     assert_eq!(exit_code(&[], &dir.path().join("missing")), 2);
 }
+
+#[test]
+fn long_help_has_examples_and_exit_codes() {
+    let long = Command::cargo_bin("good-parts")
+        .unwrap()
+        .arg("--help")
+        .output()
+        .unwrap();
+    let long = String::from_utf8(long.stdout).unwrap();
+    assert!(long.contains("Examples:"), "{long}");
+    assert!(long.contains("Exit codes:"), "{long}");
+
+    let short = Command::cargo_bin("good-parts")
+        .unwrap()
+        .arg("-h")
+        .output()
+        .unwrap();
+    let short = String::from_utf8(short.stdout).unwrap();
+    assert!(!short.contains("Examples:"), "{short}");
+}
