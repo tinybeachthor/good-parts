@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
+use crate::output::Format;
 use crate::report::SortKey;
 
 /// Find the complex parts of a code repository that are good refactoring candidates.
@@ -31,6 +32,10 @@ pub struct Args {
     /// Rank files instead of functions.
     #[arg(long)]
     pub files: bool,
+
+    /// Output format.
+    #[arg(long, value_enum, default_value_t = Format::Table)]
+    pub format: Format,
 
     /// Extra glob patterns to exclude, on top of .gitignore (repeatable).
     #[arg(long, value_name = "GLOB")]

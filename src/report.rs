@@ -1,5 +1,6 @@
 use arborist::{FileReport, FunctionMetrics, Language};
 use clap::ValueEnum;
+use serde::Serialize;
 
 /// Metric used to rank hotspots.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -11,7 +12,7 @@ pub enum SortKey {
 }
 
 /// A function that is a candidate for refactoring.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct FunctionHotspot {
     pub file: String,
     pub language: Language,
@@ -26,7 +27,7 @@ pub struct FunctionHotspot {
 }
 
 /// A file that concentrates complex functions.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct FileHotspot {
     pub file: String,
     pub language: Language,

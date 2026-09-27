@@ -9,6 +9,8 @@ arborist-metrics = "0.1.3"
 clap = { version = "4.6.7", features = ["derive"] }
 ignore = "0.4.33"
 rayon = "1.12.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 
 [[bin]]
 name = "good-parts"

@@ -1,4 +1,5 @@
 pub mod cli;
+pub mod output;
 pub mod report;
 pub mod scan;
 
@@ -8,6 +9,7 @@ use arborist::AnalysisConfig;
 use clap::Parser;
 
 use crate::cli::Args;
+use crate::output::{Format, Summary};
 
 /// Parse `args` (including the program name) and run the analysis.
 pub fn run<I, T>(args: I) -> anyhow::Result<()>
@@ -22,19 +24,20 @@ where
     };
 
     let reports = scan::scan(&args.path, &args.exclude, &config)?;
+    let summary = Summary::new(&reports, args.threshold);
+    let mut out = std::io::stdout().lock();
+
     if args.files {
-        for h in report::file_hotspots(&reports, args.sort, args.top) {
-            println!(
-                "{} score={:.1} cognitive={}",
-                h.file, h.score, h.total_cognitive
-            );
+        let hotspots = report::file_hotspots(&reports, args.sort, args.top);
+        match args.format {
+            Format::Table => output::write_file_table(&mut out, &summary, &hotspots)?,
+            Format::Json => output::write_json(&mut out, &summary, &hotspots)?,
         }
     } else {
-        for h in report::function_hotspots(&reports, args.min_cognitive, args.sort, args.top) {
-            println!(
-                "{}:{} {} score={:.1}",
-                h.file, h.start_line, h.name, h.score
-            );
+        let hotspots = report::function_hotspots(&reports, args.min_cognitive, args.sort, args.top);
+        match args.format {
+            Format::Table => output::write_function_table(&mut out, &summary, &hotspots)?,
+            Format::Json => output::write_json(&mut out, &summary, &hotspots)?,
         }
     }
     Ok(())

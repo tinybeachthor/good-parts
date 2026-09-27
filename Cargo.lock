@@ -214,6 +214,8 @@ dependencies = [
  "clap",
  "ignore",
  "rayon",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
