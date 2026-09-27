@@ -17,22 +17,24 @@ pub fn scan(
 
     let mut reports: Vec<FileReport> = files
         .par_iter()
-        .filter_map(|path| match arborist::analyze_file_with_config(path, config) {
-            Ok(mut report) => {
-                let relative = path.strip_prefix(root).unwrap_or(path);
-                report.path = relative.display().to_string();
-                Some(report)
-            }
-            Err(
-                ArboristError::UnrecognizedExtension { .. }
-                | ArboristError::LanguageNotEnabled { .. }
-                | ArboristError::UnsupportedLanguage { .. },
-            ) => None,
-            Err(err) => {
-                eprintln!("warning: skipping {}: {err}", path.display());
-                None
-            }
-        })
+        .filter_map(
+            |path| match arborist::analyze_file_with_config(path, config) {
+                Ok(mut report) => {
+                    let relative = path.strip_prefix(root).unwrap_or(path);
+                    report.path = relative.display().to_string();
+                    Some(report)
+                }
+                Err(
+                    ArboristError::UnrecognizedExtension { .. }
+                    | ArboristError::LanguageNotEnabled { .. }
+                    | ArboristError::UnsupportedLanguage { .. },
+                ) => None,
+                Err(err) => {
+                    eprintln!("warning: skipping {}: {err}", path.display());
+                    None
+                }
+            },
+        )
         .collect();
 
     reports.sort_by(|a, b| a.path.cmp(&b.path));

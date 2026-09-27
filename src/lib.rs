@@ -1,4 +1,5 @@
 pub mod cli;
+pub mod report;
 pub mod scan;
 
 use std::ffi::OsString;
@@ -21,15 +22,20 @@ where
     };
 
     let reports = scan::scan(&args.path, &args.exclude, &config)?;
-    for report in &reports {
-        println!(
-            "{} ({}): {} functions, cognitive={}, sloc={}",
-            report.path,
-            report.language,
-            report.functions.len(),
-            report.file_cognitive,
-            report.file_sloc,
-        );
+    if args.files {
+        for h in report::file_hotspots(&reports, args.sort, args.top) {
+            println!(
+                "{} score={:.1} cognitive={}",
+                h.file, h.score, h.total_cognitive
+            );
+        }
+    } else {
+        for h in report::function_hotspots(&reports, args.min_cognitive, args.sort, args.top) {
+            println!(
+                "{}:{} {} score={:.1}",
+                h.file, h.start_line, h.name, h.score
+            );
+        }
     }
     Ok(())
 }
