@@ -131,3 +131,23 @@ fn json_output_is_versioned_and_stable() {
     let files: serde_json::Value = serde_json::from_str(&files).unwrap();
     assert_eq!(files["kind"], "files");
 }
+
+fn exit_code(args: &[&str], path: &Path) -> i32 {
+    let output = Command::cargo_bin("good-parts")
+        .unwrap()
+        .args(args)
+        .arg(path)
+        .output()
+        .unwrap();
+    output.status.code().unwrap()
+}
+
+#[test]
+fn exit_codes() {
+    let dir = fixture();
+    let gate = ["--fail-over-threshold", "--threshold"];
+    assert_eq!(exit_code(&[gate[0], gate[1], "5"], dir.path()), 1);
+    assert_eq!(exit_code(&[gate[0], gate[1], "50"], dir.path()), 0);
+    assert_eq!(exit_code(&["--threshold", "5"], dir.path()), 0);
+    assert_eq!(exit_code(&[], &dir.path().join("missing")), 2);
+}

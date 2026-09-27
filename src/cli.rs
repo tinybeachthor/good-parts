@@ -29,6 +29,10 @@ pub struct Args {
     #[arg(long, default_value_t = 1)]
     pub min_cognitive: u64,
 
+    /// Exit with code 1 if any function exceeds --threshold.
+    #[arg(long)]
+    pub fail_over_threshold: bool,
+
     /// Rank files instead of functions.
     #[arg(long)]
     pub files: bool,

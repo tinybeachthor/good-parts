@@ -1,3 +1,3 @@
-fn main() -> anyhow::Result<()> {
-    good_parts::run(std::env::args_os())
+fn main() -> std::process::ExitCode {
+    good_parts::main_with(std::env::args_os())
 }
