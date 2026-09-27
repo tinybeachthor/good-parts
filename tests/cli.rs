@@ -1,0 +1,93 @@
+use std::fs;
+use std::path::Path;
+
+use assert_cmd::Command;
+use tempfile::TempDir;
+
+const SIMPLE: &str = "fn add(a: i32, b: i32) -> i32 {\n    if a > 0 { a + b } else { b }\n}\n";
+
+const TANGLED: &str = r#"
+fn tangled(xs: &[i32]) -> i32 {
+    let mut total = 0;
+    for x in xs {
+        if *x > 0 {
+            if *x % 2 == 0 {
+                total += x;
+            } else if *x % 3 == 0 {
+                total -= x;
+            }
+        } else {
+            while total > 100 {
+                total /= 2;
+            }
+        }
+    }
+    total
+}
+"#;
+
+fn fixture() -> TempDir {
+    let dir = TempDir::new().unwrap();
+    fs::create_dir(dir.path().join("src")).unwrap();
+    fs::write(dir.path().join("src/simple.rs"), SIMPLE).unwrap();
+    fs::write(dir.path().join("src/tangled.rs"), TANGLED).unwrap();
+    fs::write(dir.path().join("notes.txt"), "fn not_code() {}").unwrap();
+    dir
+}
+
+fn run(bin: &str, args: &[&str], path: &Path) -> String {
+    let output = Command::cargo_bin(bin)
+        .unwrap()
+        .args(args)
+        .arg(path)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{output:?}");
+    String::from_utf8(output.stdout).unwrap()
+}
+
+#[test]
+fn ranks_most_complex_function_first() {
+    let dir = fixture();
+    let stdout = run("good-parts", &[], dir.path());
+    let first_row = stdout.lines().nth(1).unwrap();
+    assert!(first_row.contains("tangled.rs:2"), "{stdout}");
+    assert!(stdout.contains("add"), "{stdout}");
+    assert!(!stdout.contains("not_code"), "{stdout}");
+}
+
+#[test]
+fn json_output_is_parseable() {
+    let dir = fixture();
+    let stdout = run(
+        "good-parts",
+        &["--format", "json", "--threshold", "5"],
+        dir.path(),
+    );
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    assert_eq!(json["summary"]["files"], 2);
+    assert_eq!(json["summary"]["over_threshold"], 1);
+    assert_eq!(json["hotspots"][0]["name"], "tangled");
+    assert_eq!(json["hotspots"][0]["exceeds_threshold"], true);
+}
+
+#[test]
+fn file_ranking_and_exclude() {
+    let dir = fixture();
+    let stdout = run(
+        "good-parts",
+        &["--files", "--exclude", "**/tangled.rs"],
+        dir.path(),
+    );
+    assert!(stdout.contains("simple.rs"), "{stdout}");
+    assert!(!stdout.contains("tangled.rs"), "{stdout}");
+}
+
+#[test]
+fn cargo_subcommand_matches_standalone() {
+    let dir = fixture();
+    assert_eq!(
+        run("cargo-good-parts", &["good-parts"], dir.path()),
+        run("good-parts", &[], dir.path()),
+    );
+}
