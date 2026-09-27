@@ -2,6 +2,12 @@
 name = "good-parts"
 version = "0.1.0"
 edition = "2024"
+description = "Find the complex parts of a code repository that are good refactoring candidates"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/tinybeachthor/good-parts"
+keywords = ["complexity", "refactoring", "metrics", "cli", "cargo"]
+categories = ["command-line-utilities", "development-tools::cargo-plugins"]
 
 [dependencies]
 anyhow = "1.0.104"
