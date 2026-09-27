@@ -23,7 +23,7 @@ where
         include_methods: !args.no_methods,
     };
 
-    let reports = scan::scan(&args.path, &args.exclude, &config)?;
+    let reports = scan::scan(&args.paths, &args.exclude, &config)?;
     let summary = Summary::new(&reports, args.threshold);
     let mut out = std::io::stdout().lock();
 

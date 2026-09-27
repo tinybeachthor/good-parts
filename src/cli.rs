@@ -9,9 +9,9 @@ use crate::report::SortKey;
 #[derive(Debug, Parser)]
 #[command(name = "good-parts", version, about)]
 pub struct Args {
-    /// Repository root to analyze.
-    #[arg(default_value = ".")]
-    pub path: PathBuf,
+    /// Files or directories to analyze.
+    #[arg(value_name = "PATH", default_value = ".")]
+    pub paths: Vec<PathBuf>,
 
     /// Number of candidates to show.
     #[arg(short = 'n', long, default_value_t = 20)]

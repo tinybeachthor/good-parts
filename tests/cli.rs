@@ -91,3 +91,25 @@ fn cargo_subcommand_matches_standalone() {
         run("good-parts", &[], dir.path()),
     );
 }
+
+#[test]
+fn explicit_paths_are_combined_without_duplicates() {
+    let dir = fixture();
+    let simple = dir.path().join("src/simple.rs");
+    let json = |args: &[&Path]| {
+        let mut cmd = Command::cargo_bin("good-parts").unwrap();
+        cmd.args(["--format", "json", "--min-cognitive", "0"])
+            .args(args);
+        let output = cmd.output().unwrap();
+        assert!(output.status.success(), "{output:?}");
+        serde_json::from_slice::<serde_json::Value>(&output.stdout).unwrap()
+    };
+
+    let only_simple = json(&[&simple]);
+    assert_eq!(only_simple["summary"]["files"], 1);
+    assert_eq!(only_simple["hotspots"][0]["name"], "add");
+
+    let overlapping = json(&[dir.path(), &simple]);
+    assert_eq!(overlapping["summary"]["files"], 2);
+    assert_eq!(overlapping["summary"]["functions"], 2);
+}
