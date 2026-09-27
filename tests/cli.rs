@@ -113,3 +113,21 @@ fn explicit_paths_are_combined_without_duplicates() {
     assert_eq!(overlapping["summary"]["files"], 2);
     assert_eq!(overlapping["summary"]["functions"], 2);
 }
+
+#[test]
+fn json_output_is_versioned_and_stable() {
+    let dir = fixture();
+    let stdout = run("good-parts", &["--format", "json"], dir.path());
+    let json: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+    assert_eq!(json["schema_version"], 1);
+    assert_eq!(json["kind"], "functions");
+    let top = &json["hotspots"][0];
+    let expected = format!("{}:{}", top["file"].as_str().unwrap(), top["start_line"]);
+    assert_eq!(top["location"], expected.as_str());
+    let score = top["score"].as_f64().unwrap();
+    assert_eq!(score, (score * 100.0).round() / 100.0);
+
+    let files = run("good-parts", &["--format", "json", "--files"], dir.path());
+    let files: serde_json::Value = serde_json::from_str(&files).unwrap();
+    assert_eq!(files["kind"], "files");
+}

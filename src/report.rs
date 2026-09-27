@@ -16,6 +16,8 @@ pub enum SortKey {
 pub struct FunctionHotspot {
     pub file: String,
     pub language: Language,
+    /// `file:start_line`, ready to open in an editor.
+    pub location: String,
     pub name: String,
     pub start_line: usize,
     pub end_line: usize,
@@ -52,6 +54,11 @@ fn score_of(f: &FunctionMetrics) -> f64 {
     function_score(f.cognitive, f.cyclomatic, f.sloc)
 }
 
+/// Scores are reported with two decimals so output stays readable and stable.
+fn round2(x: f64) -> f64 {
+    (x * 100.0).round() / 100.0
+}
+
 /// All functions with at least `min_cognitive`, ranked by `sort`, best candidates first.
 pub fn function_hotspots(
     reports: &[FileReport],
@@ -67,6 +74,7 @@ pub fn function_hotspots(
                 .iter()
                 .filter(|f| f.cognitive >= min_cognitive)
                 .map(|f| FunctionHotspot {
+                    location: format!("{}:{}", report.path, f.start_line),
                     file: report.path.clone(),
                     language: report.language,
                     name: f.name.clone(),
@@ -75,7 +83,7 @@ pub fn function_hotspots(
                     cognitive: f.cognitive,
                     cyclomatic: f.cyclomatic,
                     sloc: f.sloc,
-                    score: score_of(f),
+                    score: round2(score_of(f)),
                     exceeds_threshold: f.exceeds_threshold == Some(true),
                 })
         })
@@ -88,7 +96,11 @@ pub fn function_hotspots(
             SortKey::Cyclomatic => h.cyclomatic as f64,
             SortKey::Sloc => h.sloc as f64,
         };
-        key(b).total_cmp(&key(a)).then(b.score.total_cmp(&a.score))
+        key(b)
+            .total_cmp(&key(a))
+            .then(b.score.total_cmp(&a.score))
+            .then_with(|| a.file.cmp(&b.file))
+            .then(a.start_line.cmp(&b.start_line))
     });
     hotspots.truncate(top);
     hotspots
@@ -117,7 +129,7 @@ pub fn file_hotspots(reports: &[FileReport], sort: SortKey, top: usize) -> Vec<F
                 .unwrap_or(0),
             cyclomatic: report.file_cyclomatic,
             sloc: report.file_sloc,
-            score: report.functions.iter().map(score_of).sum(),
+            score: round2(report.functions.iter().map(score_of).sum()),
         })
         .collect();
 
@@ -128,7 +140,10 @@ pub fn file_hotspots(reports: &[FileReport], sort: SortKey, top: usize) -> Vec<F
             SortKey::Cyclomatic => h.cyclomatic as f64,
             SortKey::Sloc => h.sloc as f64,
         };
-        key(b).total_cmp(&key(a)).then(b.score.total_cmp(&a.score))
+        key(b)
+            .total_cmp(&key(a))
+            .then(b.score.total_cmp(&a.score))
+            .then_with(|| a.file.cmp(&b.file))
     });
     hotspots.truncate(top);
     hotspots
@@ -196,6 +211,21 @@ mod tests {
         let names: Vec<_> = hotspots.iter().map(|h| h.name.as_str()).collect();
         assert_eq!(names, ["long", "tangled"]);
         assert!(hotspots[1].exceeds_threshold);
+    }
+
+    #[test]
+    fn ties_ordered_by_file_then_line() {
+        let mut first = func("f", 3, 1, 5);
+        first.start_line = 40;
+        let reports = vec![
+            file("b.rs", vec![func("g", 3, 1, 5)]),
+            file("a.rs", vec![first, func("h", 3, 1, 5)]),
+        ];
+        let locations: Vec<_> = function_hotspots(&reports, 0, SortKey::Score, 10)
+            .into_iter()
+            .map(|h| h.location)
+            .collect();
+        assert_eq!(locations, ["a.rs:1", "a.rs:40", "b.rs:1"]);
     }
 
     #[test]

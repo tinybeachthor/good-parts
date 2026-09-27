@@ -35,18 +35,33 @@ impl Summary {
     }
 }
 
+/// Version of the JSON output format; bumped on breaking changes.
+pub const SCHEMA_VERSION: u32 = 1;
+
 #[derive(Serialize)]
 struct JsonReport<'a, T> {
+    schema_version: u32,
+    kind: &'a str,
     summary: &'a Summary,
     hotspots: &'a [T],
 }
 
+/// Write `hotspots` as JSON; `kind` is `"functions"` or `"files"`.
 pub fn write_json<T: Serialize>(
     out: &mut impl Write,
+    kind: &str,
     summary: &Summary,
     hotspots: &[T],
 ) -> io::Result<()> {
-    serde_json::to_writer_pretty(&mut *out, &JsonReport { summary, hotspots })?;
+    serde_json::to_writer_pretty(
+        &mut *out,
+        &JsonReport {
+            schema_version: SCHEMA_VERSION,
+            kind,
+            summary,
+            hotspots,
+        },
+    )?;
     writeln!(out)
 }
 

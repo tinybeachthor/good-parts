@@ -31,13 +31,13 @@ where
         let hotspots = report::file_hotspots(&reports, args.sort, args.top);
         match args.format {
             Format::Table => output::write_file_table(&mut out, &summary, &hotspots)?,
-            Format::Json => output::write_json(&mut out, &summary, &hotspots)?,
+            Format::Json => output::write_json(&mut out, "files", &summary, &hotspots)?,
         }
     } else {
         let hotspots = report::function_hotspots(&reports, args.min_cognitive, args.sort, args.top);
         match args.format {
             Format::Table => output::write_function_table(&mut out, &summary, &hotspots)?,
-            Format::Json => output::write_json(&mut out, &summary, &hotspots)?,
+            Format::Json => output::write_json(&mut out, "functions", &summary, &hotspots)?,
         }
     }
     Ok(())
