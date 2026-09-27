@@ -17,6 +17,9 @@ pub const EXIT_OVER_THRESHOLD: u8 = 1;
 /// Exit code for runtime errors (clap also uses 2 for usage errors).
 pub const EXIT_ERROR: u8 = 2;
 
+/// Markdown printed by `--agent-instructions`.
+pub const AGENT_INSTRUCTIONS: &str = include_str!("agent_instructions.md");
+
 /// Entry point shared by both binaries: runs and maps errors to [`EXIT_ERROR`].
 pub fn main_with<I, T>(args: I) -> ExitCode
 where
@@ -36,6 +39,11 @@ where
     T: Into<OsString> + Clone,
 {
     let args = Args::parse_from(args);
+    if args.agent_instructions {
+        print!("{AGENT_INSTRUCTIONS}");
+        return Ok(ExitCode::SUCCESS);
+    }
+
     let config = AnalysisConfig {
         cognitive_threshold: Some(args.threshold),
         include_methods: !args.no_methods,

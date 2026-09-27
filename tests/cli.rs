@@ -171,3 +171,34 @@ fn long_help_has_examples_and_exit_codes() {
     let short = String::from_utf8(short.stdout).unwrap();
     assert!(!short.contains("Examples:"), "{short}");
 }
+
+#[test]
+fn agent_instructions() {
+    let output = Command::cargo_bin("good-parts")
+        .unwrap()
+        .arg("--agent-instructions")
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.starts_with("# good-parts"), "{stdout}");
+    assert!(stdout.contains("schema_version"), "{stdout}");
+
+    let help = Command::cargo_bin("good-parts")
+        .unwrap()
+        .arg("-h")
+        .output()
+        .unwrap();
+    assert!(
+        String::from_utf8(help.stdout)
+            .unwrap()
+            .contains("--agent-instructions")
+    );
+
+    let combined = Command::cargo_bin("good-parts")
+        .unwrap()
+        .args(["--agent-instructions", "--files"])
+        .output()
+        .unwrap();
+    assert_eq!(combined.status.code(), Some(2));
+}

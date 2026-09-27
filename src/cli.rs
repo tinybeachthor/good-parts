@@ -13,7 +13,9 @@ cyclomatic complexity and source lines of code) and ranks the functions, or
 files, that are hardest to understand. Files ignored by .gitignore are skipped
 inside git repositories.";
 
-const AFTER_HELP: &str = "Run with --help for examples, scoring and exit codes.";
+const AFTER_HELP: &str = "\
+Run with --help for examples, scoring and exit codes.
+AI agents: run `good-parts --agent-instructions` for usage instructions.";
 
 const AFTER_LONG_HELP: &str = "\
 Examples:
@@ -34,7 +36,10 @@ Exit codes:
   2  Error (invalid arguments, unreadable path, ...)
 
 Languages:
-  Rust, Python, JavaScript, TypeScript, Java, Go. Other files are skipped.";
+  Rust, Python, JavaScript, TypeScript, Java, Go. Other files are skipped.
+
+AI agents:
+  Run `good-parts --agent-instructions` for instructions on using this tool.";
 
 #[derive(Debug, Parser)]
 #[command(
@@ -97,4 +102,11 @@ pub struct Args {
     /// Skip methods and only analyze free functions.
     #[arg(long)]
     pub no_methods: bool,
+
+    /// Print instructions for AI coding agents and exit.
+    ///
+    /// Markdown describing when and how to use good-parts, the JSON fields and a
+    /// refactoring workflow. Suitable for pasting into AGENTS.md or CLAUDE.md.
+    #[arg(long, exclusive = true)]
+    pub agent_instructions: bool,
 }

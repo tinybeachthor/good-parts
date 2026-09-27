@@ -24,16 +24,18 @@ This installs two binaries that behave identically:
 ```sh
 good-parts                      # analyze the current directory
 cargo good-parts path/to/repo   # same, as a cargo subcommand
+good-parts src/a.rs src/b.py    # only specific files
 good-parts --files              # rank files instead of functions
 good-parts --format json        # machine-readable output
+good-parts --help               # all options, examples and exit codes
 ```
 
 Example output:
 
 ```
 SCORE  COG  CYC  SLOC  LOCATION            FUNCTION
-42.6   31!  14   62    src/parser.rs:118   parse_expression
-18.3   12   8    51    src/eval.rs:40      eval_block
+41.1   31!  14   62    src/parser.rs:118   parse_expression
+18.5   12   8    50    src/eval.rs:40      eval_block
 
 48 files, 612 functions, 1 over cognitive threshold 15
 ```
@@ -48,13 +50,47 @@ SCORE  COG  CYC  SLOC  LOCATION            FUNCTION
 | `--sort <KEY>` | `score` | Rank by `score`, `cognitive`, `cyclomatic`, or `sloc` |
 | `--threshold <N>` | `15` | Cognitive complexity above which a function is flagged |
 | `--min-cognitive <N>` | `1` | Hide functions below this cognitive complexity |
+| `--fail-over-threshold` | | Exit 1 if any function exceeds `--threshold` |
 | `--files` | | Rank files instead of functions |
-| `--format <FMT>` | `table` | `table` or `json` |
+| `--format <FMT>` | `table` | `table` or `json` (versioned, for tools and agents) |
 | `--exclude <GLOB>` | | Extra patterns to skip (repeatable) |
 | `--no-methods` | | Analyze free functions only |
+| `--agent-instructions` | | Print instructions for AI coding agents |
+
+`PATH` can be repeated and may be files or directories (default: `.`).
+Reported paths are relative to the current directory.
 
 Files ignored by `.gitignore` are skipped automatically (inside a git
 repository); use `--exclude` for anything else, e.g. `--exclude 'vendor/**'`.
+
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | `--fail-over-threshold` was given and a function exceeds `--threshold` |
+| `2` | Error (invalid arguments, unreadable path, ...) |
+
+## Use with AI agents
+
+`good-parts` is built to be driven by AI coding assistants such as Claude Code:
+`--format json` output is stable and versioned (`schema_version`), locations
+are ready to open, and `--fail-over-threshold` lets an agent check its own
+refactors through the exit code.
+
+`good-parts --agent-instructions` prints a Markdown guide for agents: when to
+use the tool, the JSON fields, and a find → refactor → verify workflow. Point
+your agent at it from `AGENTS.md` or `CLAUDE.md`:
+
+```markdown
+To find refactoring candidates, run `good-parts --agent-instructions` and follow it.
+```
+
+Or paste the guide in directly:
+
+```sh
+good-parts --agent-instructions >> AGENTS.md
+```
 
 ## How candidates are ranked
 
